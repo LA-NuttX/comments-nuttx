@@ -19,7 +19,7 @@
 
 set -e
 
-WD=`test -d ${0%/*} && cd ${0%/*}; pwd`
+WD=`test -d ${0%/*} && cd ${0%/*}; pwd` #${0%/*}是一种expansion用法，%/*抹去最后一级/后的内容
 TOPDIR="${WD}/.."
 MAKECMD="make"
 USAGE="
@@ -56,7 +56,7 @@ OPTFILES="\
 
 # Parse command arguments
 
-unset boardconfig
+unset boardconfig #去掉变量
 unset winnative
 unset appdir
 unset host
@@ -65,6 +65,7 @@ unset distclean
 
 function dumpcfgs
 {
+  #找到boards下的所有defconfig，sed -e 是替换（去掉了boards/以及之前的目录），cut -d '/'是以/分隔并获取第3个，可以如此添加龙芯的内容。
   configlist=`find ${TOPDIR}/boards -name defconfig`
   for defconfig in ${configlist}; do
     config=`dirname ${defconfig} | sed -e "s,${TOPDIR}/boards/,,g"`
@@ -118,13 +119,14 @@ done
 
 # Sanity checking
 
-if [ -z "${boardconfig}" ]; then
-  echo "" 1>&2
+if [ -z "${boardconfig}" ]; then #如果字符串长度为0
+  echo "" 1>&2 #将标准输出重定向到错误输出
   echo "Missing <board/config> argument" 1>&2
   echo "$USAGE" 1>&2
   exit 2
 fi
-
+# ${boardconfig}是configure.sh -l 后面的配置，例如 maix-bit:nsh。下文-s只打印分隔符号所在的本行的内容
+# configdir=nsh,boarddir=maix-bit
 configdir=`echo ${boardconfig} | cut -s -d':' -f2`
 if [ -z "${configdir}" ]; then
   boarddir=`echo ${boardconfig} | cut -d'/' -f1`
@@ -134,6 +136,7 @@ else
 fi
 
 configpath=${TOPDIR}/boards/*/*/${boarddir}/configs/${configdir}
+#例如/boards/*/*/maix-bit/configs/nsh
 if [ ! -d ${configpath} ]; then
   # Try direct path used with custom configurations.
 
@@ -149,11 +152,12 @@ if [ ! -d ${configpath} ]; then
     fi
   fi
 fi
-
-src_makedefs=${TOPDIR}/boards/*/*/${boarddir}/configs/${configdir}/Make.defs
+#maix-bit:nsh没有Make.defs?
+src_makedefs=${TOPDIR}/boards/*/*/${boarddir}/configs/${configdir}/Make.defs 
 dest_makedefs="${TOPDIR}/Make.defs"
 
 if [ ! -r ${src_makedefs} ]; then
+  #-r,如果 FILE 存在且是可读的则返回为真。例如maix-bit:nsh没有Make.defs，找到scripts
   src_makedefs=${TOPDIR}/boards/*/*/${boarddir}/scripts/Make.defs
 
   if [ ! -r ${src_makedefs} ]; then
@@ -170,8 +174,11 @@ if [ ! -r ${src_makedefs} ]; then
 fi
 
 src_config=${configpath}/defconfig
+#例如/boards/*/*/maix-bit/configs/nsh/defconfig
 dest_config="${TOPDIR}/.config"
+#复制到.config
 backup_config="${TOPDIR}/defconfig"
+#做一份backup
 
 if [ ! -r ${src_config} ]; then
   echo "File ${src_config} does not exist"
@@ -182,6 +189,7 @@ if [ -r ${dest_config} ]; then
   if [ "X${enforce_distclean}" = "Xy" ]; then
     ${MAKECMD} -C ${TOPDIR} distclean
   else
+    # cmp 比较文件是否有差异
     if cmp -s ${src_config} ${backup_config}; then
       echo "No configuration change."
       exit 0
@@ -207,13 +215,14 @@ fi
 # native host, then don't even check what is in the defconfig file.
 
 oldnative=`grep CONFIG_WINDOWS_NATIVE= ${src_config} | cut -d'=' -f2`
+#oldnative确实为空字符串，则赋值为n。
 if [ -z "${oldnative}" ]; then
   oldnative=n
 fi
 if [ -z "${winnative}" ]; then
   winnative=$oldnative
 fi
-
+#winnative=n
 # If no application directory was provided on the command line and we are
 # switching between a windows native host and some other host then ignore the
 # path to the apps/ directory in the defconfig file.  It will most certainly
@@ -222,6 +231,7 @@ fi
 defappdir=y
 if [ -z "${appdir}" -a "X$oldnative" = "X$winnative" ]; then
   quoted=`grep "^CONFIG_APPS_DIR=" ${src_config} | cut -d'=' -f2`
+  # quoted 为空
   if [ ! -z "${quoted}" ]; then
     appdir=`echo ${quoted} | sed -e "s/\"//g"`
     defappdir=n
@@ -253,13 +263,16 @@ if [ -z "${appdir}" ]; then
 fi
 
 # For checking the apps dir path, we need a POSIX version of the relative path.
-
+#pos:\替换成/, win: \替换成\\
 posappdir=`echo "${appdir}" | sed -e 's/\\\\/\\//g'`
 winappdir=`echo "${appdir}" | sed -e 's/\\//\\\\\\\/g'`
 
 # If appsdir was provided (or discovered) then make sure that the apps/
 # directory exists
 
+# echo appdir=${appdir} #../apps
+# echo TOPDIR=${TOPDIR} #/home/lqt/projects/nuttxprojects/comments/nuttx/tools/..
+# echo posappdir=${posappdir} #../apps
 if [ ! -z "${appdir}" -a ! -d "${TOPDIR}/${posappdir}" ]; then
   echo "Directory \"${TOPDIR}/${posappdir}\" does not exist"
   exit 7
@@ -267,6 +280,14 @@ fi
 
 # Okay... Everything looks good.  Setup the configuration
 
+# src_makedefs=${TOPDIR}/boards/*/*/${boarddir}/scripts/Make.defs
+# src_config=${configpath}/defconfig
+# #例如/boards/*/*/maix-bit/configs/nsh/defconfig
+# dest_config="${TOPDIR}/.config"
+# #复制到.config
+# backup_config="${TOPDIR}/defconfig"
+# #做一份backup
+# install 类似于cp命令 -m控制权限
 echo "  Copy files"
 ln -sf ${src_makedefs} ${dest_makedefs} || \
   { echo "Failed to symlink ${src_makedefs}" ; exit 8 ; }
@@ -276,7 +297,7 @@ install -m 644 ${src_config} "${backup_config}" || \
   { echo "Failed to backup ${src_config}" ; exit 10 ; }
 
 # Install any optional files
-
+# optfiles?需要添加吗，如果需要，要放在${configpath}/${opt}
 for opt in ${OPTFILES}; do
   test -f ${configpath}/${opt} && install ${configpath}/${opt} "${TOPDIR}/"
 done
@@ -284,10 +305,11 @@ done
 # If we did not use the CONFIG_APPS_DIR that was in the defconfig config file,
 # then append the correct application information to the tail of the .config
 # file
-
+# 如果使用了默认app路径
 if [ "X${defappdir}" = "Xy" ]; then
   # In-place edit can mess up permissions on Windows
   # sed -i.bak -e "/^CONFIG_APPS_DIR/d" "${dest_config}"
+  # sed -e 此处是删除模式匹配的行
   sed -e "/^CONFIG_APPS_DIR/d" "${dest_config}" > "${dest_config}-temp"
   mv "${dest_config}-temp" "${dest_config}"
 
@@ -295,6 +317,7 @@ if [ "X${defappdir}" = "Xy" ]; then
     echo "CONFIG_APPS_DIR=\"$winappdir\"" >> "${dest_config}"
   else
     echo "CONFIG_APPS_DIR=\"$posappdir\"" >> "${dest_config}"
+    # $posappdir=../apps
   fi
 fi
 
@@ -302,3 +325,4 @@ fi
 # reconstitued before they can be used.
 
 ${TOPDIR}/tools/sethost.sh $host $*
+#命令为 /home/lqt/projects/nuttxprojects/comments/nuttx/tools/../tools/sethost.sh -l

@@ -41,7 +41,7 @@ endif
 
 # These are configuration variables that are quoted by configuration tool
 # but which must be unquoted when used in the build system.
-
+# 去除双引号
 CONFIG_ARCH       := $(patsubst "%",%,$(strip $(CONFIG_ARCH)))
 CONFIG_ARCH_CHIP  := $(patsubst "%",%,$(strip $(CONFIG_ARCH_CHIP)))
 CONFIG_ARCH_BOARD := $(patsubst "%",%,$(strip $(CONFIG_ARCH_BOARD)))
@@ -50,8 +50,11 @@ CONFIG_ARCH_BOARD := $(patsubst "%",%,$(strip $(CONFIG_ARCH_BOARD)))
 # $(TOPDIR)/Make.defs can override these appropriately.
 
 MODULECC ?= $(CC)
+# $(warning MODULECC=$(CC))
 MODULELD ?= $(LD)
+# $(warning MODULELD=$(LD))
 MODULESTRIP ?= $(STRIP)
+# $(warning MODULESTRIP=$(STRIP))
 
 # Define HOSTCC on the make command line if it differs from these defaults
 # Define HOSTCFLAGS with -g on the make command line to build debug versions
@@ -116,7 +119,7 @@ else
 endif
 
 # Process chip-specific directories
-
+# riscv 不为y
 ifeq ($(CONFIG_ARCH_CHIP_CUSTOM),y)
   CUSTOM_CHIP_DIR = $(patsubst "%",%,$(CONFIG_ARCH_CHIP_CUSTOM_DIR))
 ifeq ($(CONFIG_ARCH_CHIP_CUSTOM_DIR_RELPATH),y)
@@ -129,10 +132,11 @@ endif
 else
   CHIP_DIR ?= $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src$(DELIM)$(CONFIG_ARCH_CHIP)
   CHIP_KCONFIG = $(TOPDIR)$(DELIM)arch$(DELIM)dummy$(DELIM)dummy_kconfig
+  # CHIP_KCONFIG = $(TOPDIR)/arch/dummy/dummy_kconfig
 endif
 
 # Process board-specific directories
-
+# riscv 不为y，如果定制的话，可能会替代dummy？
 ifeq ($(CONFIG_ARCH_BOARD_CUSTOM),y)
   CUSTOM_DIR = $(patsubst "%",%,$(CONFIG_ARCH_BOARD_CUSTOM_DIR))
   ifeq ($(CONFIG_ARCH_BOARD_CUSTOM_DIR_RELPATH),y)
@@ -143,9 +147,11 @@ ifeq ($(CONFIG_ARCH_BOARD_CUSTOM),y)
   CUSTOM_BOARD_KPATH = $(BOARD_DIR)$(DELIM)Kconfig
 else
   BOARD_DIR ?= $(TOPDIR)$(DELIM)boards$(DELIM)$(CONFIG_ARCH)$(DELIM)$(CONFIG_ARCH_CHIP)$(DELIM)$(CONFIG_ARCH_BOARD)
+  # BOARD_DIR=$(TOPDIR)/boards/risc-v/k210/maix-bit
 endif
 ifeq (,$(wildcard $(CUSTOM_BOARD_KPATH)))
   BOARD_KCONFIG = $(TOPDIR)$(DELIM)boards$(DELIM)dummy$(DELIM)dummy_kconfig
+  # riscv没有定制，BOARD_KCONFIG = $(TOPDIR)/boards/dummy/dummy_kconfig
 else
   BOARD_KCONFIG = $(CUSTOM_BOARD_KPATH)
 endif
@@ -156,6 +162,7 @@ ifeq (,$(wildcard $(BOARD_DIR)$(DELIM)..$(DELIM)common))
   endif
 else
   BOARD_COMMON_DIR ?= $(wildcard $(BOARD_DIR)$(DELIM)..$(DELIM)common)
+  # for risc-v BOARD_COMMON_DIR为空
 endif
 BOARD_DRIVERS_DIR ?= $(wildcard $(BOARD_DIR)$(DELIM)..$(DELIM)drivers)
 ifeq ($(BOARD_DRIVERS_DIR),)
@@ -178,8 +185,10 @@ else ifeq ($(CONFIG_WINDOWS_MSYS),y)
   DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)copydir.sh
 else
   DIRLINK   ?= $(TOPDIR)$(DELIM)tools$(DELIM)link.sh
+  # riscv
 endif
   DIRUNLINK ?= $(TOPDIR)$(DELIM)tools$(DELIM)unlink.sh
+  # riscv
 endif
 
 # MKDEP - Create the depend rule in the portable way
@@ -541,7 +550,7 @@ endef
 endif
 
 # Invoke make
-
+# +表示make -n命令会执行
 define MAKE_template
 	+$(Q) $(MAKE) -C $(1) $(2) APPDIR="$(APPDIR)"
 

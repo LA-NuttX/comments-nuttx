@@ -18,6 +18,7 @@
   $ cd nuttx
   $ make distclean
   $ ./tools/configure.sh rv-virt:nsh
+
   $ make
 
 4. Run the nuttx with qemu
@@ -25,7 +26,7 @@
   $ qemu-system-riscv32 -semihosting -M virt -cpu rv32 -smp 8 -bios none -kernel nuttx -nographic
 
   or
-
+  # ./tools/configure.sh rv-virt:nsh64
   $ qemu-system-riscv64 -semihosting -M virt -cpu rv64 -smp 8 -bios none -kernel nuttx -nographic
 
   NuttShell (NSH) NuttX-10.3.0-RC1

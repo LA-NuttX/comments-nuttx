@@ -20,6 +20,7 @@
 set -e
 
 progname=$0
+# progname 就是当前脚本
 host=
 wenv=
 MAKECMD="make"
@@ -80,7 +81,7 @@ done
 #   Linux: Linux
 #   MSYS: MINGW32_NT-6.2
 #   BSD: FreeBSD, OpenBSD, NetBSD, *BSD
-
+# 如果host没有的话，猜测
 if [ -z "$host" ]; then
   case $(uname -s) in
     Darwin)
@@ -108,7 +109,7 @@ fi
 
 # Detect Host CPU type.
 # At least MacOS and Linux can have x86_64 and arm based hosts.
-
+# host硬件架构名称，默认x86_64
 if [ -z "$cpu" ]; then
   case $(uname -m) in
     arm64)
@@ -123,21 +124,22 @@ if [ -z "$cpu" ]; then
       ;;
   esac
 fi
-
 WD=`test -d ${0%/*} && cd ${0%/*}; pwd`
 cd $WD
 
 if [ -x sethost.sh ]; then
   cd ..
 fi
-
+# 此时在TOPDIR
 if [ -x tools/sethost.sh ]; then
+  set -x
   nuttx=$PWD
+  set +x
 else
   echo "This script must be executed in nuttx/ or nuttx/tools directories"
   exit 1
 fi
-
+# .config是defconfig复制到TOPDIR
 if [ ! -r $nuttx/.config ]; then
   echo "There is no .config at $nuttx"
   exit 1
@@ -149,11 +151,11 @@ if [ ! -r $nuttx/Make.defs ]; then
 fi
 
 # Modify the configuration
-
+# linux平台
 if [ "X$host" == "Xlinux" -o "X$host" == "Xmacos" -o "X$host" == "Xbsd" ]; then
 
   # Disable Windows (to suppress warnings from Window Environment selections)
-
+#kconfig-tweak微调配置项，可以从命令行查看help
   kconfig-tweak --file $nuttx/.config --disable CONFIG_HOST_WINDOWS
 
   # Enable Linux or macOS or BSD
@@ -220,4 +222,8 @@ fi
 
 echo "  Refreshing..."
 
+set -x
+#当前目录在TOPDIR，进入Makefile，包含了tools/Unix.mk
 ${MAKECMD} olddefconfig $* || { echo "ERROR: failed to refresh"; exit 1; }
+
+set +x
