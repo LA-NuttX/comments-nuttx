@@ -29,6 +29,7 @@ config ARCH_CHIP_K210
 	select ARCH_RV_ISA_C
 	select ARCH_HAVE_FPU if !K210_WITH_QEMU
 	select ARCH_HAVE_DPFPU if !K210_WITH_QEMU
+# ?dpfpu double precision fpu
 	select ARCH_HAVE_MPU
 	select ARCH_HAVE_TESTSET
 	select ARCH_HAVE_MULTICPU
@@ -133,6 +134,7 @@ config ARCH_CHIP_RV32M1
 		NXP RV32M1 processor (RISC-V Core with PULP extensions).
 
 config ARCH_CHIP_QEMU_RV
+# 在boards/Kconfig下，有ARCH_BOARD_QEMU_RV_VIRT定义
 	bool "QEMU RV"
 	select ARCH_HAVE_MULTICPU
 	select ARCH_HAVE_MPU
@@ -162,7 +164,7 @@ config ARCH_RV64
 	bool
 	default n
 	select LIBC_ARCH_ELF_64BIT if LIBC_ARCH_ELF
-
+# wiki上可以看到riscv的指令集扩展，M,A,C扩展
 config ARCH_RV_ISA_M
 	bool
 	default n

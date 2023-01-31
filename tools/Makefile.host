@@ -201,8 +201,12 @@ endif
 
 incdir$(HOSTEXEEXT): incdir.c
 	$(Q) $(HOSTCC) $(HOSTCFLAGS) -o incdir$(HOSTEXEEXT) incdir.c
+	#hostcc=cc=gcc，链接到gcc
+	$(warning HOSTEXEEXT is defined, it is $(HOSTEXEEXT))
 
+# HOSTEXEEXT值为空，下方的ifdef不起作用
 ifdef HOSTEXEEXT
+$(warning HOSTEXEEXT is $(HOSTEXEEXT))
 incdir: incdir$(HOSTEXEEXT)
 endif
 

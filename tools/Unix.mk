@@ -17,7 +17,7 @@
 # under the License.
 #
 ############################################################################
-
+ #TOPDIR是nuttx/ ${shell ..}表示在makefile里使用shell命令。|将前面路径作为后续sed命令的输入。's/要被取代的字串/新的字串/g'
 export TOPDIR := ${shell echo $(CURDIR) | sed -e 's/ /\\ /g'}
 
 # Build any necessary tools needed early in the build.
@@ -266,9 +266,10 @@ tools/cnvwindeps$(HOSTEXEEXT):
 include/arch:
 	@echo "LN: $@ to $(ARCH_DIR)/include"
 	$(Q) $(DIRLINK) $(TOPDIR)/$(ARCH_DIR)/include $@
+# 
 
 # Link the boards/<arch>/<chip>/<board>/include directory to include/arch/board
-
+# |表示命令前提，命令前提改变，不会引起目标的改变
 include/arch/board: | include/arch
 	@echo "LN: $@ to $(BOARD_DIR)/include"
 	$(Q) $(DIRLINK) $(BOARD_DIR)/include $@
@@ -281,6 +282,7 @@ ARCH_SRC_BOARD_SYMLINK=$(BOARD_COMMON_DIR)
 ARCH_SRC_BOARD_BOARD_SYMLINK=$(BOARD_DIR)/src
 else
 ARCH_SRC_BOARD_SYMLINK=$(BOARD_DIR)/src
+#(TOPDIR)/boards/risc-v/k210/maix-bit/src
 endif
 
 ifneq ($(ARCH_SRC_BOARD_SYMLINK),)
@@ -307,6 +309,7 @@ ifeq ($(CONFIG_ARCH_CHIP_CUSTOM),y)
 ARCH_SRC_CHIP_SYMLINK_DIR=$(CHIP_DIR)
 else ifneq ($(CONFIG_ARCH_CHIP),)
 ARCH_SRC_CHIP_SYMLINK_DIR=$(TOPDIR)/$(ARCH_SRC)/$(CONFIG_ARCH_CHIP)
+# $(TOPDIR)/arch/risc-v/src/k210
 endif
 
 ifneq ($(ARCH_SRC_CHIP_SYMLINK_DIR),)
@@ -316,11 +319,12 @@ $(ARCH_SRC)/chip:
 endif
 
 # Link arch/<arch-name>/include/<chip-name> to include/arch/chip
-
+# CONFIG_ARCH_CHIP_CUSTOM: riscv is not set
 ifeq ($(CONFIG_ARCH_CHIP_CUSTOM),y)
 INCLUDE_ARCH_CHIP_SYMLINK_DIR=$(CHIP_DIR)/include
 else ifneq ($(CONFIG_ARCH_CHIP),)
 INCLUDE_ARCH_CHIP_SYMLINK_DIR=$(TOPDIR)/$(ARCH_INC)/$(CONFIG_ARCH_CHIP)
+# TOPDIR/arch/include/k210
 endif
 
 ifneq ($(INCLUDE_ARCH_CHIP_SYMLINK_DIR),)
@@ -330,13 +334,13 @@ include/arch/chip: | include/arch
 endif
 
 # Copy $(CHIP_KCONFIG) to arch/dummy/Kconfig
-
+# 对于riscv，$(CHIP_KCONFIG)就是$(TOPDIR)/arch/dummy/dummy_kconfig
 arch/dummy/Kconfig:
 	@echo "CP: $@ to $(CHIP_KCONFIG)"
 	$(Q) cp -f $(CHIP_KCONFIG) $@
 
 # Copy $(BOARD_KCONFIG) to boards/dummy/Kconfig
-
+# 对于riscv，$(BOARD_KCONFIG)就是$(TOPDIR)/boards/dummy/dummy_kconfig
 boards/dummy/Kconfig:
 	@echo "CP: $@ to $(BOARD_KCONFIG)"
 	$(Q) cp -f $(BOARD_KCONFIG) $@
@@ -345,24 +349,27 @@ DIRLINKS_SYMLINK = \
   include/arch \
   include/arch/board \
   drivers/platform \
-
+# 分别链接到arch/risc-v/include /boards/risc-v/k210/maix-bit/include drivers/dummy
 DIRLINKS_FILE = \
   arch/dummy/Kconfig \
   boards/dummy/Kconfig \
 
 ifneq ($(INCLUDE_ARCH_CHIP_SYMLINK_DIR),)
 DIRLINKS_SYMLINK += include/arch/chip
+# 链接到riscv的TOPDIR/arch/include/k210
 endif
 
 ifneq ($(ARCH_SRC_CHIP_SYMLINK_DIR),)
 DIRLINKS_SYMLINK += $(ARCH_SRC)/chip
+# arch/risc-v/src/chip连接到$(TOPDIR)/arch/risc-v/src/k210
 endif
 
 ifneq ($(ARCH_SRC_BOARD_SYMLINK),)
 DIRLINKS_SYMLINK += $(ARCH_SRC)/board
+# arch/risc-v/src/board连接到(TOPDIR)/boards/risc-v/k210/maix-bit/src
 endif
 
-ifneq ($(ARCH_SRC_BOARD_BOARD_SYMLINK),)
+ifneq ($(ARCH_SRC_BOARD_BOARD_SYMLINK),)# 变量为空
 DIRLINKS_SYMLINK += $(ARCH_SRC)/board/board
 endif
 
@@ -374,7 +381,7 @@ endif
 
 DIRLINKS_EXTERNAL_DEP = $(patsubst %,%/.dirlinks,$(DIRLINKS_EXTERNAL_DIRS))
 DIRLINKS_FILE += $(DIRLINKS_EXTERNAL_DEP)
-
+# 当目标不存在时，命令前提才会参与规则的执行
 .dirlinks: $(DIRLINKS_FILE) | $(DIRLINKS_SYMLINK)
 	touch $@
 
@@ -382,6 +389,7 @@ DIRLINKS_FILE += $(DIRLINKS_EXTERNAL_DEP)
 
 %/.dirlinks:
 	$(Q) $(MAKE) -C $(patsubst %/.dirlinks,%,$@) dirlinks
+# dirlinks会进入apps下的makefile执行dirlinks
 	$(Q) touch $@
 
 # clean_dirlinks
@@ -389,11 +397,13 @@ DIRLINKS_FILE += $(DIRLINKS_EXTERNAL_DEP)
 # This is part of the distclean target. It removes all symbolic links created by the dirlink target.
 
 # The symlink subfolders need to be removed before the parent symlinks
-
+# DELFILE DELDIR见Config.mk定义
 .PHONY: clean_dirlinks
 clean_dirlinks:
 	$(Q) $(call DELFILE, $(DIRLINKS_FILE))
+# 删除文件的链接
 	$(Q) $(call DELFILE, .dirlinks)
+# 删除apps下的dirlinks
 	$(Q) $(DIRUNLINK) drivers/platform
 ifneq ($(INCLUDE_ARCH_CHIP_SYMLINK_DIR),)
 	$(Q) $(DIRUNLINK) include/arch/chip
@@ -609,10 +619,13 @@ oldconfig:
 	$(Q) APPSDIR=${CONFIG_APPS_DIR} EXTERNALDIR=$(EXTERNALDIR) kconfig-conf --oldconfig Kconfig
 
 olddefconfig:
+	echo APPSDIR=$(CONFIG_APPS_DIR),EXTERNALDIR=$(EXTERNALDIR)
 	$(Q) $(MAKE) clean_context
+# 清理链接、文本
 	$(Q) $(MAKE) apps_preconfig
 	$(Q) APPSDIR=${CONFIG_APPS_DIR} EXTERNALDIR=$(EXTERNALDIR) kconfig-conf --olddefconfig Kconfig
-
+# $(Q)=@,@放在句首，不会打印本行命令，但会打印本行输出
+# olddefconfig，使用.config配置，新符号使用默认值
 menuconfig:
 	$(Q) $(MAKE) clean_context
 	$(Q) $(MAKE) apps_preconfig
@@ -700,7 +713,7 @@ clean: subdir_clean
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 
 subdir_distclean: $(foreach SDIR, $(CLEANDIRS), $(SDIR)_distclean)
-
+# distclean: dist和distribute有关，会删除配置过程中产生的文件
 distclean: clean subdir_distclean
 ifeq ($(CONFIG_BUILD_2PASS),y)
 	$(Q) $(MAKE) -C $(CONFIG_PASS1_BUILDIR) distclean
@@ -734,7 +747,7 @@ apps_preconfig: .dirlinks
 ifneq ($(APPDIR),)
 	$(Q) $(MAKE) -C $(APPDIR) preconfig
 endif
-
+# 进入 appdir 进行 preconfig，preconfig主要生成了一些Kconfig，.kconfig文件
 apps_clean:
 ifneq ($(APPDIR),)
 	$(Q) $(MAKE) -C $(APPDIR) clean

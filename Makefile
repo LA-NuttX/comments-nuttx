@@ -30,6 +30,14 @@ ifeq ($(wildcard .config),)
 else
 include .config
 
+# # Build any necessary tools needed early in the build.
+# # incdir - Is needed immediately by all Make.defs file.
+# TOPDIR := ${shell echo $(CURDIR) | sed -e 's/ /\\ /g'}
+# $(warning TOPDIR=$(TOPDIR))
+# DUMMY  := ${shell $(MAKE) -C tools -f Makefile.host incdir \
+#           INCDIR="$(TOPDIR)/tools/incdir.sh"}
+# # -C 进入tools，-f指定文件，incdir是目标，INCDIR传入变量，此处编译了incdir.c
+# $(warning DUMMY=$(DUMMY))
 # Include the correct Makefile for the selected architecture.
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
