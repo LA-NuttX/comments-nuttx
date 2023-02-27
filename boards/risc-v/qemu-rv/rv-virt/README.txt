@@ -42,7 +42,7 @@
   or
 
   $ qemu-system-riscv64 -semihosting -M virt,aclint=on -cpu rv64 -smp 8 -bios none -kernel nuttx -nographic
-
+# ACLINT规范定义了一组内存映射设备，这些设备在一个多HART RISC-V平台上为每个HART提供处理器间中断(IPI)和定时器功能
   NuttShell (NSH) NuttX-10.3.0-RC1
   nsh> mount -t hostfs -o fs=. /host
   nsh> cat /host/AUTHORS

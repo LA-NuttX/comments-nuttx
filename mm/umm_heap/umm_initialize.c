@@ -48,6 +48,7 @@
  *
  *     In this configuration, this function is called early in nx_start()
  *     to initialize the common heap.
+ *      只有一个kernel模式的blob，包含内核和应用的代码
  *
  *   CONFIG_BUILD_PROTECTED
  *     In this configuration, there are two "blobs", one containing
@@ -84,7 +85,7 @@ void umm_initialize(FAR void *heap_start, size_t heap_size)
 #ifdef CONFIG_BUILD_KERNEL
   USR_HEAP = mm_initialize(NULL, heap_start, heap_size);
 #else
-  USR_HEAP = mm_initialize("Umem", heap_start, heap_size);
+  USR_HEAP = mm_initialize("Umem", heap_start, heap_size);//risc-v在此处初始化堆
 #endif
 }
 

@@ -54,4 +54,6 @@ else
 endif
 
 LDELFFLAGS += -r -e main
+# -r生成可重新定位的输出，-e设置起始地址为main，
 LDELFFLAGS += -T $(call CONVERT_PATH,$(TOPDIR)/binfmt/libelf/gnu-elf.ld)
+# -T读取链接脚本, CONVERT_PATH见Config.mk的定义，后面不变

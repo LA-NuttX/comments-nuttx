@@ -126,6 +126,7 @@ int up_cpu_paused(int cpu)
 
   /* Save the current context at CURRENT_REGS into the TCB at the head
    * of the assigned task list for this CPU.
+   * 将当前的上下文CURRENT_REGS保存到TCB中，TCB是当前CPU任务列表头部的TCB
    */
 
   riscv_savestate(tcb->xcp.regs);

@@ -293,7 +293,7 @@ struct dq_queue_s
   FAR dq_entry_t *head;
   FAR dq_entry_t *tail;
 };
-typedef struct dq_queue_s dq_queue_t;
+typedef struct dq_queue_s dq_queue_t;//双端队列？
 
 /****************************************************************************
  * Public Function Prototypes

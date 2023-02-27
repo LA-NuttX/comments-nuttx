@@ -334,12 +334,14 @@ int oneshot_tick_start(FAR struct oneshot_lowerhalf_s *lower,
                        oneshot_callback_t callback, FAR void *arg,
                        clock_t ticks)
 {
-  struct timespec ts;
+  //oneshot_tick_start(g_oneshot_lower,oneshot_callback,NULL,1)
+  struct timespec ts;//timespec见time.h
 
   DEBUGASSERT(lower->ops->start);
 
-  timespec_from_tick(&ts, ticks);
+  timespec_from_tick(&ts, ticks);//计算出1个tick占多少秒多少毫秒
   return lower->ops->start(lower, callback, arg, &ts);
+  //oneshot_tick_start(g_oneshot_lower,oneshot_callback,NULL,1)
 }
 
 static inline
@@ -366,7 +368,7 @@ int oneshot_tick_current(FAR struct oneshot_lowerhalf_s *lower,
 
   DEBUGASSERT(lower->ops->current);
 
-  ret = lower->ops->current(lower, &ts);
+  ret = lower->ops->current(lower, &ts);//riscv_mtimer_current(lower,2)
   *ticks = timespec_to_tick(&ts);
 
   return ret;

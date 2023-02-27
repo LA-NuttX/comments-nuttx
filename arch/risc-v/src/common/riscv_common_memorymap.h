@@ -59,10 +59,10 @@ extern "C"
 #endif
 
 #ifndef __ASSEMBLY__
-EXTERN uintptr_t g_idle_topstack;
+EXTERN uintptr_t g_idle_topstack;//定义在外部代码
 
 /* Address of per-cpu idle stack base */
-
+//定义了每个核的idle stack 基地址，相关内容定义在nuttx/arch/risc-v/src/common/riscv_cpuidlestack.c
 EXTERN const uint8_t * const g_cpu_basestack[CONFIG_SMP_NCPUS];
 
 /* Address of the saved user stack pointer */

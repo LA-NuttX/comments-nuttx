@@ -25,8 +25,8 @@
  *   Semihosting call with call number and one parameter
  *
  ****************************************************************************/
-
-  .option norvc
+/* 见手册https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md */
+  .option norvc /*不使用压缩指令集 */
   .text
   .balign 16
   .global smh_call

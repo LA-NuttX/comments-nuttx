@@ -119,7 +119,7 @@ static int file_vopen(FAR struct file *filep, FAR const char *path,
 
 #if defined(CONFIG_BCH) && \
     !defined(CONFIG_DISABLE_MOUNTPOINT) && \
-    !defined(CONFIG_DISABLE_PSEUDOFS_OPERATIONS)
+    !defined(CONFIG_DISABLE_PSEUDOFS_OPERATIONS)//riscv no
   /* If the inode is block driver, then we may return a character driver
    * proxy for the block driver.  block_proxy() will instantiate a BCH
    * character driver wrapper around the block driver, open(), then
@@ -168,7 +168,7 @@ static int file_vopen(FAR struct file *filep, FAR const char *path,
 #ifndef CONFIG_DISABLE_MOUNTPOINT
   else if (INODE_IS_MOUNTPT(inode))
     {
-      if (inode->u.i_mops->open != NULL)
+      if (inode->u.i_mops->open != NULL)//指向uart_open
         {
           ret = inode->u.i_mops->open(filep, desc.relpath, oflags, mode);
         }
@@ -237,7 +237,7 @@ static int nx_vopen(FAR const char *path, int oflags, va_list ap)
 
   /* Let file_vopen() do all of the work */
 
-  ret = file_vopen(&filep, path, oflags, getumask(), ap);
+  ret = file_vopen(&filep, path, oflags, getumask(), ap);//进入getumask()
   if (ret < 0)
     {
       return ret;

@@ -137,7 +137,7 @@ static const struct uart_ops_s g_uart_ops =
 
 /* I/O buffers */
 
-#ifdef CONFIG_16550_UART0
+#ifdef CONFIG_16550_UART0//riscv y
 static char g_uart0rxbuffer[CONFIG_16550_UART0_RXBUFSIZE];
 static char g_uart0txbuffer[CONFIG_16550_UART0_TXBUFSIZE];
 #endif
@@ -156,7 +156,7 @@ static char g_uart3txbuffer[CONFIG_16550_UART3_TXBUFSIZE];
 
 /* This describes the state of the 16550 uart0 port. */
 
-#ifdef CONFIG_16550_UART0
+#ifdef CONFIG_16550_UART0//riscv y
 static struct u16550_s g_uart0priv =
 {
   .uartbase       = CONFIG_16550_UART0_BASE,
@@ -337,13 +337,13 @@ static uart_dev_t g_uart3port =
 #  endif
 
 #else  /* CONFIG_16550_SERIAL_DISABLE_REORDERING */
-
+//riscv y
 /* Which UART with be tty0/console and which tty1? tty2? tty3? */
 
-#  if defined(CONFIG_16550_UART0_SERIAL_CONSOLE)
+#  if defined(CONFIG_16550_UART0_SERIAL_CONSOLE)//y
 #    define CONSOLE_DEV     g_uart0port    /* UART0=console */
 #    define TTYS0_DEV       g_uart0port    /* UART0=ttyS0 */
-#    ifdef CONFIG_16550_UART1
+#    ifdef CONFIG_16550_UART1//riscv only uart0
 #      define TTYS1_DEV     g_uart1port    /* UART0=ttyS0;UART1=ttyS1 */
 #      ifdef CONFIG_16550_UART2
 #        define TTYS2_DEV   g_uart2port    /* UART0=ttyS0;UART1=ttyS1;UART2=ttyS2 */
@@ -379,7 +379,7 @@ static uart_dev_t g_uart3port =
 #        undef TTYS3_DEV                   /* No ttyS3 */
 #      endif
 #    endif
-#  elif defined(CONFIG_16550_UART1_SERIAL_CONSOLE)
+#  elif defined(CONFIG_16550_UART1_SERIAL_CONSOLE)//riscv no
 #    define CONSOLE_DEV     g_uart1port    /* UART1=console */
 #    define TTYS0_DEV       g_uart1port    /* UART1=ttyS0 */
 #    ifdef CONFIG_16550_UART0
@@ -526,7 +526,7 @@ static inline uart_datawidth_t u16550_serialin(FAR struct u16550_s *priv,
 static inline void u16550_serialout(FAR struct u16550_s *priv, int offset,
                                     uart_datawidth_t value)
 {
-#ifdef CONFIG_SERIAL_UART_ARCH_MMIO
+#ifdef CONFIG_SERIAL_UART_ARCH_MMIO//riscv y
   *((FAR volatile uart_datawidth_t *)priv->uartbase + offset) = value;
 #else
   uart_putreg(priv->uartbase, offset, value);
@@ -613,7 +613,7 @@ static inline uint32_t u16550_divisor(FAR struct u16550_s *priv)
 
 static int u16550_setup(FAR struct uart_dev_s *dev)
 {
-#ifndef CONFIG_16550_SUPRESS_CONFIG
+#ifndef CONFIG_16550_SUPRESS_CONFIG//risc-v
   FAR struct u16550_s *priv = (FAR struct u16550_s *)dev->priv;
   uint16_t div;
   uint32_t lcr;
@@ -737,11 +737,13 @@ static void u16550_shutdown(struct uart_dev_s *dev)
  *   is called when the serial port is opened.  Normally, this is just after
  *   the setup() method is called, however, the serial console may operate in
  *   a non-interrupt driven mode during the boot phase.
+ *    配置uart进入中断驱动的模式
  *
  *   RX and TX interrupts are not enabled when by the attach method (unless
  *   the hardware supports multiple levels of interrupt enabling).  The RX
  *   and TX interrupts are not enabled until the txint() and rxint() methods
  *   are called.
+ *    直到txint和rxint被调用才使能该tx和rx的中断
  *
  ****************************************************************************/
 
@@ -754,7 +756,7 @@ static int u16550_attach(struct uart_dev_s *dev)
 
   ret = irq_attach(priv->irq, u16550_interrupt, dev);
 #ifndef CONFIG_ARCH_NOINTC
-  if (ret == OK)
+  if (ret == OK)//riscv in
     {
       /* Enable the interrupt (RX and TX interrupts are still disabled
        * in the UART
@@ -817,13 +819,13 @@ static int u16550_interrupt(int irq, FAR void *context, FAR void *arg)
        * termination conditions
        */
 
-      status = u16550_serialin(priv, UART_IIR_OFFSET);
+      status = u16550_serialin(priv, UART_IIR_OFFSET);//0xcc
 
       /* The UART_IIR_INTSTATUS bit should be zero if there are pending
        * interrupts
        */
 
-      if ((status & UART_IIR_INTSTATUS) != 0)
+      if ((status & UART_IIR_INTSTATUS) != 0)//如果有中断，则为0,不会break
         {
           /* Break out of the loop when there is no longer a
            * pending interrupt
@@ -1292,10 +1294,10 @@ void up_earlyserialinit(void)
 {
   /* Configuration whichever one is the console */
 
-#ifdef CONSOLE_DEV
+#ifdef CONSOLE_DEV              //uart_dev_s类型的g_uart0port，160行初始化了这个串口的各个值，例如基地址
   CONSOLE_DEV.isconsole = true;
 #ifndef CONFIG_16550_SUPRESS_INITIAL_CONFIG
-  u16550_setup(&CONSOLE_DEV);
+  u16550_setup(&CONSOLE_DEV);   //riscv here
 #endif
 #endif
 }

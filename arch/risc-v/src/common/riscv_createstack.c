@@ -207,7 +207,7 @@ int up_create_stack(struct tcb_s *tcb, size_t stack_size, uint8_t ttype)
  *
  * Description:
  *   Write a well know value into the stack
- *
+ * 把idle stack的值写为0xdeadbeaf
  ****************************************************************************/
 
 #ifdef CONFIG_STACK_COLORATION
@@ -238,7 +238,7 @@ void riscv_stack_color(void *stackbase, size_t nbytes)
   stkend = STACK_ALIGN_DOWN(stkend);
   nwords = (stkend - (uintptr_t)stackbase) >> 2;
 
-  /* Set the entire stack to the coloration value */
+  /* Set the entire stack to the coloration value 设置整个栈为0xdeadbeef*/
 
   while (nwords-- > 0)
     {

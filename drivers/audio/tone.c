@@ -185,7 +185,7 @@ static const struct file_operations g_toneops =
 /****************************************************************************
  * Name: oneshot_callback
  ****************************************************************************/
-
+//riscv not this
 static void oneshot_callback(FAR struct oneshot_lowerhalf_s *lower,
                              FAR void *arg)
 {

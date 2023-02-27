@@ -57,6 +57,7 @@ staging$(DELIM)libpass1$(LIBEXT): pass1$(DELIM)libpass1$(LIBEXT)
 
 sched$(DELIM)libsched$(LIBEXT): pass2dep
 	$(Q) $(MAKE) -C sched libsched$(LIBEXT) EXTRAFLAGS="$(KDEFINE) $(EXTRAFLAGS)"
+# make -C sched libsched.a EXTRAFLAGS=-D__KERNEL__
 
 staging$(DELIM)libsched$(LIBEXT): sched$(DELIM)libsched$(LIBEXT)
 	$(Q) $(call INSTALL_LIB,$<,$@)

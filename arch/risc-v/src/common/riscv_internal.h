@@ -98,6 +98,7 @@
 /* Determine which (if any) console driver to use.  If a console is enabled
  * and no other console device is specified, then a serial console is
  * assumed.
+ * riscv CONFIG_DEV_CONSOLE=y, CONFIG_CONSOLE_SYSLOG is not set.
  */
 
 #ifndef CONFIG_DEV_CONSOLE

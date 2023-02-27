@@ -91,7 +91,7 @@ else
   LDSTARTGROUP ?= --start-group
   LDENDGROUP   ?= --end-group
 endif
-
+# board是当前链接的目录
 BOARDMAKE = $(if $(wildcard board$(DELIM)Makefile),y,)
 
 LIBPATHS += -L $(call CONVERT_PATH,$(TOPDIR)$(DELIM)staging)

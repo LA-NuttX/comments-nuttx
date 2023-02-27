@@ -46,7 +46,9 @@
  *   when it is impossible to wait on a mutex:
  *     1.The idle process performs the memory corruption check.
  *     2.The task/thread free the memory in the exiting process.
- *
+ *获取内存管理的信号量，如果能够等待信号量的话，该函数可能在特殊情况下被调用：
+ *    1.idle process 执行内存损坏检查
+ *    2.任务在退出阶段释放内存
  * Input Parameters:
  *   heap  - heap instance want to take mutex
  *

@@ -2243,7 +2243,7 @@ void nxsched_alarm_tick_expiration(clock_t ticks);
  *
  ****************************************************************************/
 
-#if defined(CONFIG_SCHED_CPULOAD) && defined(CONFIG_SCHED_CPULOAD_EXTCLK)
+#if defined(CONFIG_SCHED_CPULOAD) && defined(CONFIG_SCHED_CPULOAD_EXTCLK)//riscv no
 void nxsched_process_cpuload_ticks(uint32_t ticks);
 #  define nxsched_process_cpuload() nxsched_process_cpuload_ticks(1)
 #endif

@@ -83,6 +83,7 @@
  * (unassigned) task.  In the non-SMP case, the head of this list is the
  * currently active task and the tail of this list, the lowest priority
  * task, is always the IDLE task.
+ * 优先级队列，等待运行，头部最高优先级活跃的task，尾部总是idle task.
  */
 
 dq_queue_t g_readytorun;
@@ -93,11 +94,13 @@ dq_queue_t g_readytorun;
  *  - Only tasks/threads that are eligible to run, but not currently running,
  *    and
  *  - Tasks/threads that have not been assigned to a CPU.
- *
+ * 只包含可以跑但没跑的，以及，没有分配给cpu的任务
+ * 
  * Otherwise, the TCB will be retained in an assigned task list,
  * g_assignedtasks.  As its name suggests, on 'g_assignedtasks queue for CPU
  * 'n' would contain only tasks/threads that are assigned to CPU 'n'.  Tasks/
  * threads would be assigned a particular CPU by one of two mechanisms:
+ * SMP下，任务被分配到g_assignedtasks，任务分配机制如下
  *
  *  - (Semi-)permanently through an RTOS interfaces such as
  *    pthread_attr_setaffinity(), or
@@ -109,12 +112,14 @@ dq_queue_t g_readytorun;
  * would only go into the g_assignedtasks[n] list for the CPU 'n' to which
  * the thread has been assigned.  Hence, the g_readytorun list would hold
  * only unassigned tasks/threads.
+ * 未分配给cpu的任务会留在g_readytorun
  *
  * Like the g_readytorun list in in non-SMP case, each g_assignedtask[] list
  * is prioritized:  The head of the list is the currently active task on this
  * CPU.  Tasks after the active task are ready-to-run and assigned to this
  * CPU. The tail of this assigned task list, the lowest priority task, is
  * always the CPU's IDLE task.
+ * 每个g_assignedtasks也是优先级队列，末尾是idle task，头部是活跃任务，其他是准备好的待执行任务
  */
 
 #ifdef CONFIG_SMP
@@ -123,6 +128,7 @@ dq_queue_t g_assignedtasks[CONFIG_SMP_NCPUS];
 
 /* g_running_tasks[] holds a references to the running task for each cpu.
  * It is valid only when up_interrupt_context() returns true.
+ * 正在运行的task
  */
 
 FAR struct tcb_s *g_running_tasks[CONFIG_SMP_NCPUS];
@@ -131,11 +137,13 @@ FAR struct tcb_s *g_running_tasks[CONFIG_SMP_NCPUS];
  * in the g_readytorun list because:  (1) They are higher priority than the
  * currently active task at the head of the g_readytorun list, and (2) the
  * currently active task has disabled pre-emption.
+ * 
+ * 比队列头更高优先级的任务
  */
 
 dq_queue_t g_pendingtasks;
 
-/* This is the list of all tasks that are blocked waiting for a signal */
+/* This is the list of all tasks that are blocked waiting for a signal 阻塞*/
 
 dq_queue_t g_waitingforsignal;
 
@@ -159,7 +167,7 @@ dq_queue_t g_stoppedtasks;
 
 dq_queue_t g_inactivetasks;
 
-/* This is the value of the last process ID assigned to a task */
+/* This is the value of the last process ID assigned to a task 上次分配出去的pid*/
 
 volatile pid_t g_lastpid;
 
@@ -218,14 +226,14 @@ const struct tasklist_s g_tasklisttable[NUM_TASK_STATES] =
     0
   },
   {                                              /* TSTATE_WAIT_SEM */
-    (FAR void *)offsetof(sem_t, waitlist),
-    TLIST_ATTR_PRIORITIZED | TLIST_ATTR_OFFSET
+    (FAR void *)offsetof(sem_t, waitlist),      /* sem_t 见sem_s*/
+    TLIST_ATTR_PRIORITIZED | TLIST_ATTR_OFFSET  /* 表明任务列表的指针是offset*/
   },
   {                                              /* TSTATE_WAIT_SIG */
     &g_waitingforsignal,
     0
   }
-#ifndef CONFIG_DISABLE_MQUEUE
+#ifndef CONFIG_DISABLE_MQUEUE /*MQUEUE message queue消息队列*/
   ,
   {                                              /* TSTATE_WAIT_MQNOTEMPTY */
     (FAR void *)offsetof(struct mqueue_inode_s, cmn.waitfornotempty),
@@ -269,6 +277,8 @@ uint8_t g_nx_initstate;  /* See enum nx_initstate_e */
  * task.  The IDLE task later starts the other CPUs and spawns the user
  * initialization task.  That user initialization task is responsible for
  * bringing up the rest of the system.
+ * 
+ * 系统在cpu0上启动，进入idle task. idle task启动其他cpu并生成user initialization task, 该任务可以用于启动系统其他部分。
  */
 
 static struct task_tcb_s g_idletcb[CONFIG_SMP_NCPUS];
@@ -326,13 +336,15 @@ void nx_start(void)
 
   for (i = 0; i < CONFIG_SMP_NCPUS; i++)
     {
-      FAR dq_queue_t *tasklist;
+      FAR dq_queue_t *tasklist;//双端队列的任务列表
 
       /* Initialize a TCB for this thread of execution.  NOTE:  The default
        * value for most components of the g_idletcb are zero.  The entire
        * structure is set to zero.  Then only the (potentially) non-zero
        * elements are initialized. NOTE:  The idle task is the only task in
        * that has pid == 0 and sched_priority == 0.
+       * 
+       * idle thread tcb的大部分内容的值为0,只有部分初始化值不为0,空闲任务是唯一一个pid=0,调度优先级=0的任务
        */
 
       memset((void *)&g_idletcb[i], 0, sizeof(struct task_tcb_s));
@@ -355,7 +367,7 @@ void nx_start(void)
 #endif
         {
           g_idletcb[i].cmn.start      = nx_start;
-          g_idletcb[i].cmn.entry.main = (main_t)nx_start;
+          g_idletcb[i].cmn.entry.main = (main_t)nx_start;//nuttx/include/sys/types.h 定义了main_t函数指针 typedef CODE int (*main_t)(int argc, FAR char *argv[]);
         }
 
       /* Set the task flags to indicate that this is a kernel thread and, if
@@ -395,9 +407,10 @@ void nx_start(void)
       /* Configure the task name in the argument list.  The IDLE task does
        * not really have an argument list, but this name is still useful
        * for things like the NSH PS command.
-       *
+       * 配置参数列表的任务名
        * In the kernel mode build, the arguments are saved on the task's
        * stack and there is no support that yet.
+       * 
        */
 
       g_idleargv[i][0] = g_idletcb[i].cmn.name;
@@ -412,7 +425,7 @@ void nx_start(void)
 #ifdef CONFIG_SMP
       tasklist = TLIST_HEAD(&g_idletcb[i].cmn, i);
 #else
-      tasklist = TLIST_HEAD(&g_idletcb[i].cmn);
+      tasklist = TLIST_HEAD(&g_idletcb[i].cmn);//获取当前tcb状态所对应的list
 #endif
       dq_addfirst((FAR dq_entry_t *)&g_idletcb[i], tasklist);
 
@@ -435,22 +448,25 @@ void nx_start(void)
 
 #if defined(MM_KERNEL_USRHEAP_INIT) || defined(CONFIG_MM_KERNEL_HEAP) || \
     defined(CONFIG_MM_PGALLOC)
+  /** mm.h中定义了flat build,kernel build的关于user heap的细节
+   * riscv MM_KERNEL_USRHEAP_INIT=1
+   */
   /* Initialize the memory manager */
 
     {
       FAR void *heap_start;
       size_t heap_size;
 
-#ifdef MM_KERNEL_USRHEAP_INIT
+#ifdef MM_KERNEL_USRHEAP_INIT //riscv 1
       /* Get the user-mode heap from the platform specific code and configure
        * the user-mode memory allocator.
        */
 
-      up_allocate_heap(&heap_start, &heap_size);
-      kumm_initialize(heap_start, heap_size);
+      up_allocate_heap(&heap_start, &heap_size);//初始化为 g_idle_topstack, CONFIG_RAM_END - g_idle_topstack
+      kumm_initialize(heap_start, heap_size);//跳转到umm_initialize
 #endif
 
-#ifdef CONFIG_MM_KERNEL_HEAP
+#ifdef CONFIG_MM_KERNEL_HEAP //riscv no
       /* Get the kernel-mode heap from the platform specific code and
        * configure the kernel-mode memory allocator.
        */
@@ -459,7 +475,7 @@ void nx_start(void)
       kmm_initialize(heap_start, heap_size);
 #endif
 
-#ifdef CONFIG_MM_PGALLOC
+#ifdef CONFIG_MM_PGALLOC //riscv no
       /* If there is a page allocator in the configuration, then get the page
        * heap information from the platform-specific code and configure the
        * page allocator.
@@ -472,13 +488,13 @@ void nx_start(void)
 #endif
 
 #ifdef CONFIG_ARCH_HAVE_EXTRA_HEAPS
-  /* Initialize any extra heap. */
+  /* Initialize any extra heap. *///ricv no
 
   up_extraheaps_init();
 #endif
 
 #ifdef CONFIG_MM_IOB
-  /* Initialize IO buffering */
+  /* Initialize IO buffering *//riscv no
 
   iob_initialize();
 #endif
@@ -523,7 +539,7 @@ void nx_start(void)
 #endif
 
       /* Initialize the processor-specific portion of the TCB */
-
+      //nuttx/arch/risc-v/src/common/riscv_initialstate.c
       up_initial_state(&g_idletcb[i].cmn);
 
       /* Initialize the thread local storage */
@@ -547,7 +563,7 @@ void nx_start(void)
 
   /* Initialize tasking data structures */
 
-  task_initialize();
+  task_initialize();//riscv none
 
   /* Disables context switching because we need take the memory manager
    * semaphore on this CPU so that it will not be available on the other
@@ -650,7 +666,7 @@ void nx_start(void)
            * IDLE task.
            */
 
-          DEBUGVERIFY(group_setupidlefiles(&g_idletcb[i]));
+          DEBUGVERIFY(group_setupidlefiles(&g_idletcb[i]));//uart相关
         }
     }
 
@@ -675,7 +691,7 @@ void nx_start(void)
 
   /* Create initial tasks and bring-up the system */
 
-  DEBUGVERIFY(nx_bringup());
+  DEBUGVERIFY(nx_bringup());//调度
 
   /* Enter to idleloop */
 

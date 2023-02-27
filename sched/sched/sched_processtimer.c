@@ -59,6 +59,7 @@
  ****************************************************************************/
 
 #if CONFIG_RR_INTERVAL > 0 || defined(CONFIG_SCHED_SPORADIC)
+//riscv in
 static inline void nxsched_cpu_scheduler(int cpu)
 {
   FAR struct tcb_s *rtcb = current_task(cpu);
@@ -107,6 +108,7 @@ static inline void nxsched_cpu_scheduler(int cpu)
  ****************************************************************************/
 
 #if CONFIG_RR_INTERVAL > 0 || defined(CONFIG_SCHED_SPORADIC)
+//CONFIG_RR_INTERVAL=200, SPORADIC表示不定期的
 static inline void nxsched_process_scheduler(void)
 {
 #ifdef CONFIG_SMP
@@ -199,6 +201,7 @@ static inline void nxsched_process_wdtimer(void)
  *   architecture specific code, but must call the following OS
  *   function periodically -- the calling interval must be
  *   USEC_PER_TICK
+ * 每隔USEC_PER_TICK必须调用此函数，调度相关的？
  *
  * Input Parameters:
  *   None
@@ -210,7 +213,7 @@ static inline void nxsched_process_wdtimer(void)
 
 void nxsched_process_timer(void)
 {
-#ifdef CONFIG_CLOCK_TIMEKEEPING
+#ifdef CONFIG_CLOCK_TIMEKEEPING//riscv no
   /* Process wall time */
 
   clock_update_wall_time();
@@ -218,14 +221,14 @@ void nxsched_process_timer(void)
 
   /* Increment the system time (if in the link) */
 
-  clock_timer();
+  clock_timer();//系统tick++
 
-#ifndef CONFIG_SCHED_CPULOAD_EXTCLK
+#ifndef CONFIG_SCHED_CPULOAD_EXTCLK//riscv in
   /* Perform CPU load measurements (before any timer-initiated context
    * switches can occur)
    */
 
-  nxsched_process_cpuload();
+  nxsched_process_cpuload();//空函数
 #endif
 
   /* Check if the currently executing task has exceeded its
@@ -236,9 +239,9 @@ void nxsched_process_timer(void)
 
   /* Process watchdogs */
 
-  nxsched_process_wdtimer();
+  nxsched_process_wdtimer();//riscv yes，但是函数里没有🐶可以feed
 
-#ifdef CONFIG_SYSTEMTICK_HOOK
+#ifdef CONFIG_SYSTEMTICK_HOOK//riscv no
   /* Call out to a user-provided function in order to perform board-specific,
    * custom timer operations.
    */

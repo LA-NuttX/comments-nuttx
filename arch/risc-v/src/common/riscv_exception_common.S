@@ -123,7 +123,7 @@ exception_common:
 
   /* If context switch is needed, return a new sp */
 
-  mv         sp, a0
+  mv         sp, a0 /*sp=a0 */
 
   riscv_loadfpu   sp
 
@@ -162,3 +162,6 @@ g_intstacktop:
   .size  g_intstacktop, 0
   .size  g_intstackalloc, STACK_ALIGN_DOWN(STACK_ALLOC_SIZE)
 #endif
+/* .type object设置为数据对象
+g_intstackalloc 分配了STACK_ALIGN_UP(STACK_ALLOC_SIZE)的字节
+*/

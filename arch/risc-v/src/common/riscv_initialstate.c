@@ -45,6 +45,7 @@
  *   A new thread is being started and a new TCB
  *   has been created. This function is called to initialize
  *   the processor specific portions of the new TCB.
+ * 初始化架构相关的TCB信息
  *
  *   This function must setup the initial architecture registers
  *   and/or  stack so that execution will begin at tcb->start
@@ -80,7 +81,7 @@ void up_initial_state(struct tcb_s *tcb)
 #endif /* CONFIG_STACK_COLORATION */
       return;
     }
-
+  //设置xcpt寄存器的位置
   xcp->regs = (uintptr_t *)(
     (uintptr_t)tcb->stack_base_ptr + tcb->adj_stack_size - XCPTCONTEXT_SIZE);
 
@@ -101,7 +102,7 @@ void up_initial_state(struct tcb_s *tcb)
 
   /* Setup thread local storage pointer */
 
-#ifdef CONFIG_SCHED_THREAD_LOCAL
+#ifdef CONFIG_SCHED_THREAD_LOCAL//riscv no
   xcp->regs[REG_TP]      = (uintptr_t)tcb->stack_alloc_ptr +
                                      sizeof(struct tls_info_s);
 #endif

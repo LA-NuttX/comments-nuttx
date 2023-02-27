@@ -105,7 +105,7 @@
 #endif
 
 /* Processor PC */
-
+/*NDX: index*/
 #define REG_EPC_NDX         0
 
 /* General pupose registers
@@ -169,11 +169,11 @@
 #define REG_X30_NDX         30
 #define REG_X31_NDX         31
 
-/* Interrupt Context register */
-
+/* Interrupt Context register, 用于保存status寄存器 */
+/* NDX: index*/
 #define REG_INT_CTX_NDX     32
-
-#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTREGS
+/* XCPT: exception*/
+#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTREGS//riscv no
 #  define INT_XCPT_REGS     (33 + CONFIG_ARCH_RISCV_INTXCPT_EXTREGS)
 #else
 #  define INT_XCPT_REGS     33
@@ -245,7 +245,7 @@
 #  define FPU_REG_FULL_SIZE (0)
 #endif /* CONFIG_ARCH_FPU */
 
-#define XCPTCONTEXT_REGS    (INT_XCPT_REGS + FPU_XCPT_REGS)
+#define XCPTCONTEXT_REGS    (INT_XCPT_REGS + FPU_XCPT_REGS)//INT_XCPT_REGS=33,FPU_XCPT_REGS=0
 
 #define XCPTCONTEXT_SIZE    (INT_REG_SIZE * XCPTCONTEXT_REGS)
 
@@ -512,6 +512,7 @@ struct xcptcontext
 {
   /* The following function pointer is non-NULL if there are pending signals
    * to be processed.
+   * 有信号等待处理，它不为NULL
    */
 
   void *sigdeliver; /* Actual type is sig_deliver_t */
@@ -523,6 +524,7 @@ struct xcptcontext
    * only a single signal handler can be active.  This precludes
    * queuing of signal actions.  As a result, signals received while
    * another signal handler is executing will be ignored!
+   * 信号没有实现排队，只能有一个信号处理程序可以是活跃的
    */
 
   uintptr_t *saved_regs;
@@ -608,6 +610,8 @@ extern "C"
  * register storage structure.  If is non-NULL only during interrupt
  * processing.  Access to g_current_regs[] must be through the macro
  * CURRENT_REGS for portability.
+ * 
+ * 中断处理过程中，g_current_regs才不为null，它保存了当前中断等级寄存器存储结构
  */
 
 /* For the case of architectures with multiple CPUs, then there must be one
@@ -616,6 +620,7 @@ extern "C"
 
 EXTERN volatile uintptr_t *g_current_regs[CONFIG_SMP_NCPUS];
 #define CURRENT_REGS (g_current_regs[up_cpu_index()])
+//非SMP,up_cpu_index()被宏定义为0
 
 /****************************************************************************
  * Public Function Prototypes
@@ -721,7 +726,7 @@ static inline bool up_interrupt_context(void)
 #endif
 
   bool ret = CURRENT_REGS != NULL;
-
+//#define CURRENT_REGS (g_current_regs[up_cpu_index()])
 #ifdef CONFIG_SMP
   up_irq_restore(flags);
 #endif

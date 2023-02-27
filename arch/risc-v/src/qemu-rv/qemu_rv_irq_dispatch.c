@@ -54,8 +54,9 @@
  ****************************************************************************/
 
 void *riscv_dispatch_irq(uintptr_t vector, uintptr_t *regs)
-{
+{//a0=mcause,a1=context
   int irq = (vector >> RV_IRQ_MASK) | (vector & 0xf);
+  //例如vector=0x8000 0000 0000 0007，对于时钟中断，irq=0x17
 
   /* Firstly, check if the irq is machine external interrupt */
 
@@ -70,7 +71,7 @@ void *riscv_dispatch_irq(uintptr_t vector, uintptr_t *regs)
 
   /* EXT means no interrupt */
 
-  if (RISCV_IRQ_EXT != irq)
+  if (RISCV_IRQ_EXT != irq)//除了plic中断以外的中断
     {
       /* Deliver the IRQ */
 

@@ -56,14 +56,16 @@ uintptr_t riscv_get_newintctx(void)
    * kernel trampoline at nxtask_start() or pthread_start().
    * The thread's privileges will be dropped before transitioning to
    * user code. Also set machine / supervisor previous interrupt enable.
+   * 设置特权模式为高特权模式
+   * 设置中断使能
    *
    * Mask the bits which should be preserved (from ISA spec)
    */
 
   uintptr_t status = READ_CSR(CSR_STATUS);
 
-  status &= MSTATUS_WPRI;
-
+  status &= MSTATUS_WPRI;//仅留下保留位（无意义bits）
+//高特权等级，中断使能
   return (status | STATUS_PPP | STATUS_SUM | STATUS_PIE
 #ifdef CONFIG_ARCH_FPU
                  | MSTATUS_FS_INIT

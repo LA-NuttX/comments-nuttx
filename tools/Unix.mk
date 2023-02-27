@@ -382,6 +382,8 @@ endif
 DIRLINKS_EXTERNAL_DEP = $(patsubst %,%/.dirlinks,$(DIRLINKS_EXTERNAL_DIRS))
 DIRLINKS_FILE += $(DIRLINKS_EXTERNAL_DEP)
 # 当目标不存在时，命令前提才会参与规则的执行
+# DIRLINKS_FILE=arch/dummy/Kconfig boards/dummy/Kconfig  /home/lqt/projects/nuttxprojects/comments/apps/.dirlinks
+# DIRLINKS_SYMLINK=include/arch include/arch/board drivers/platform  include/arch/chip arch/risc-v/src/chip arch/risc-v/src/board
 .dirlinks: $(DIRLINKS_FILE) | $(DIRLINKS_SYMLINK)
 	touch $@
 
@@ -432,13 +434,15 @@ endif
 CONTEXTDIRS_DEPS = $(patsubst %,%/.context,$(CONTEXTDIRS))
 
 context: include/nuttx/config.h include/nuttx/version.h .dirlinks $(CONTEXTDIRS_DEPS) | staging
-
+# CONTEXTDIRS_DEPS=boards/.context drivers/.context fs/.context /home/lqt/projects/nuttxprojects/comments/apps/.context arch/risc-v/src/.context libs/libc/.context
+# 竖线关心staging是否存在
 staging:
 	$(Q) mkdir -p $@
 
 # Pattern rule for $(CONTEXTDIRS_DEPS)
 
 %.context: include/nuttx/config.h .dirlinks
+# 进入各%.context的目录执行make context，包括arch/risc-v/src
 	$(Q) $(MAKE) -C $(patsubst %.context,%,$@) TOPDIR="$(TOPDIR)" context
 	$(Q) touch $@
 
@@ -496,8 +500,11 @@ include tools/LibTargets.mk
 # is unknown to this makefile unless CONFIG_PASS1_OBJECT is defined.
 
 pass1: $(USERLIBS)
-
+#USERLIBS=
+# CONFIG_PASS1_OBJECT可能是静态库(archive),或者增量链接对象
 pass2: $(NUTTXLIBS)
+#pass2依赖于系统的静态库
+#NUTTXLIBS=staging/libsched.a staging/libdrivers.a staging/libboards.a staging/libc.a staging/libmm.a staging/libarch.a staging/libapps.a staging/libfs.a staging/libbinfmt.a
 
 # $(BIN)
 #
@@ -509,6 +516,7 @@ pass2: $(NUTTXLIBS)
 
 $(BIN): pass1 pass2
 ifeq ($(CONFIG_BUILD_2PASS),y)
+#riscv 未设置
 	$(Q) if [ -z "$(CONFIG_PASS1_BUILDIR)" ]; then \
 		echo "ERROR: CONFIG_PASS1_BUILDIR not defined"; \
 		exit 1; \
@@ -524,27 +532,35 @@ ifeq ($(CONFIG_BUILD_2PASS),y)
 	$(Q) $(MAKE) -C $(CONFIG_PASS1_BUILDIR) LINKLIBS="$(LINKLIBS)" USERLIBS="$(USERLIBS)" "$(CONFIG_PASS1_TARGET)"
 endif
 	$(Q) $(MAKE) -C $(ARCH_SRC) EXTRA_OBJS="$(EXTRA_OBJS)" LINKLIBS="$(LINKLIBS)" EXTRAFLAGS="$(KDEFINE) $(EXTRAFLAGS)" $(BIN)
+# make -C arch/risc-v/src EXTRA_OBJS= LINKLIBS=libsched.a libdrivers.a libboards.a libc.a libmm.a libarch.a libapps.a libfs.a libbinfmt.a
+# EXTRAFLAGS=-D__KERNEL__ EXTRAFLAGS= nuttx
 	$(Q) if [ -w /tftpboot ] ; then \
 		cp -f $(BIN) /tftpboot/$(BIN).${CONFIG_ARCH}; \
 	fi
+# 如果目录存在并且可写
 	$(Q) echo $(BIN) > nuttx.manifest
 	$(Q) printf "%s\n" *.map >> nuttx.manifest
 ifeq ($(CONFIG_INTELHEX_BINARY),y)
+#riscv 设置
 	@echo "CP: nuttx.hex"
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O ihex $(BIN) nuttx.hex
+#riscv64-unknown-elf-objcopy -O ihex nuttx nuttx.hex
 	$(Q) echo nuttx.hex >> nuttx.manifest
 endif
 ifeq ($(CONFIG_MOTOROLA_SREC),y)
+#riscv no设置
 	@echo "CP: nuttx.srec"
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O srec $(BIN) nuttx.srec
 	$(Q) echo nuttx.srec >> nuttx.manifest
 endif
 ifeq ($(CONFIG_RAW_BINARY),y)
+#riscv no设置
 	@echo "CP: nuttx.bin"
 	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary $(BIN) nuttx.bin
 	$(Q) echo nuttx.bin >> nuttx.manifest
 endif
 ifeq ($(CONFIG_UBOOT_UIMAGE),y)
+#riscv no设置
 	@echo "MKIMAGE: uImage"
 	$(Q) mkimage -A $(CONFIG_ARCH) -O linux -C none -T kernel -a $(CONFIG_UIMAGE_LOAD_ADDRESS) \
 		-e $(CONFIG_UIMAGE_ENTRY_POINT) -n $(BIN) -d nuttx.bin uImage
@@ -554,6 +570,7 @@ ifeq ($(CONFIG_UBOOT_UIMAGE),y)
 	$(Q) echo "uImage" >> nuttx.manifest
 endif
 	$(call POSTBUILD, $(TOPDIR))
+#riscv没有后续的postbuild
 
 # flash (or download : DEPRECATED)
 #
@@ -597,6 +614,8 @@ pass1dep: context tools/mkdeps$(HOSTEXEEXT) tools/cnvwindeps$(HOSTEXEEXT)
 	done
 
 pass2dep: context tools/mkdeps$(HOSTEXEEXT) tools/cnvwindeps$(HOSTEXEEXT)
+#pass2dep: context tools/mkdeps tools/cnvwindeps
+#KERNDEPDIRS=/home/lqt/projects/nuttxprojects/comments/apps sched drivers boards arch/risc-v/src fs binfmt libs/libc mm
 	$(Q) for dir in $(KERNDEPDIRS) ; do \
 		$(MAKE) -C $$dir EXTRAFLAGS="$(KDEFINE) $(EXTRAFLAGS)" depend || exit; \
 	done
@@ -692,8 +711,9 @@ export: $(NUTTXLIBS)
 depend: pass1dep pass2dep
 
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
-
+#cleandirs定义在nuttx/tools/Directories.mk中,_clean函数在上面用模板生成
 subdir_clean: $(foreach SDIR, $(CLEANDIRS), $(SDIR)_clean)
+	$(warning CLEANDIRS=$(CLEANDIRS))
 ifeq ($(CONFIG_BUILD_2PASS),y)
 	$(Q) $(MAKE) -C $(CONFIG_PASS1_BUILDIR) clean
 endif

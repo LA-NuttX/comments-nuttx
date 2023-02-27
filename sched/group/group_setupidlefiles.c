@@ -71,7 +71,7 @@ int group_setupidlefiles(FAR struct task_tcb_s *tcb)
 
 #if defined(CONFIG_DEV_CONSOLE) || defined(CONFIG_DEV_NULL)
 #ifdef CONFIG_DEV_CONSOLE
-  fd = nx_open("/dev/console", O_RDWR);
+  fd = nx_open("/dev/console", O_RDWR);//可读可写权限
 #else
   fd = nx_open("/dev/null", O_RDWR);
 #endif
@@ -113,7 +113,7 @@ int group_setupidlefiles(FAR struct task_tcb_s *tcb)
 
   /* Allocate file/socket streams for the TCB */
 
-#ifdef CONFIG_FILE_STREAM
+#ifdef c
   return group_setupstreams(tcb);
 #else
   return OK;

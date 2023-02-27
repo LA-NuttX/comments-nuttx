@@ -47,14 +47,14 @@ void fs_initialize(void)
 
   inode_initialize();
 
-#ifdef CONFIG_FS_AIO
+#ifdef CONFIG_FS_AIO//riscv no
   /* Initialize for asynchronous I/O */
 
   aio_initialize();
 
 #endif
 
-#ifdef CONFIG_FS_RPMSGFS_SERVER
+#ifdef CONFIG_FS_RPMSGFS_SERVER//riscv no
   rpmsgfs_server_init();
 #endif
 }

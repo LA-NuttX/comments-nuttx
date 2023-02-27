@@ -47,7 +47,7 @@ void up_irqinitialize(void)
 {
   /* Disable Machine interrupts */
 
-  up_irq_save();
+  up_irq_save();//loongarch是否需要在此处调用？下面没看到restore
 
   /* Disable all global interrupts */
 

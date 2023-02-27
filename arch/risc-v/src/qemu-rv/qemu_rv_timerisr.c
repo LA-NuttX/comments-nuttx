@@ -46,7 +46,9 @@
  ****************************************************************************/
 
 #define MTIMER_FREQ 10000000
+//每秒振荡10M次
 #define TICK_COUNT (10000000 / TICK_PER_SEC)
+//每次tick振荡多少次
 
 #ifdef CONFIG_BUILD_KERNEL
 
@@ -133,13 +135,15 @@ static void qemu_rv_reload_mtimecmp(void)
 void up_timer_initialize(void)
 {
 #ifndef CONFIG_BUILD_KERNEL
+  //一次性的lowerhalf?,lowerhalf和架构的硬件相关
+  //oneshot_lowerhalf_s定义了很多操作
   struct oneshot_lowerhalf_s *lower = riscv_mtimer_initialize(
     QEMU_RV_CLINT_MTIME, QEMU_RV_CLINT_MTIMECMP,
     RISCV_IRQ_MTIMER, MTIMER_FREQ);
 
-  DEBUGASSERT(lower);
+  DEBUGASSERT(lower);//CONFIG_DEBUG_ASSERTIONS宏
 
-  up_alarm_set_lowerhalf(lower);
+  up_alarm_set_lowerhalf(lower);//调用nuttx/drivers/timers/arch_alarm.c
 #else
   /* NOTE: This function is called in S-mode */
 

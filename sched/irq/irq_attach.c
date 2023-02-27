@@ -78,18 +78,7 @@ int irq_attach(int irq, xcpt_t isr, FAR void *arg)
           /* Disable the interrupt if we can before detaching it.  We might
            * not be able to do this if:  (1) the device does not have a
            * centralized interrupt controller (so up_disable_irq() is not
-           * supported). Or (2) if the device has different number for vector
-           * numbers and IRQ numbers (in that case, we don't know the correct
-           * IRQ number to use to disable the interrupt). In those cases, the
-           * code will just need to be careful that it disables all interrupt
-           * sources before detaching from the interrupt vector.
-           */
-
-#if !defined(CONFIG_ARCH_NOINTC) && !defined(CONFIG_ARCH_VECNOTIRQ)
-          up_disable_irq(irq);
-#endif
-          /* Detaching the ISR really means re-attaching it to the
-           * unexpected exception handler.
+        #else   * unexpected exception handler.
            */
 
           isr = irq_unexpected_isr;

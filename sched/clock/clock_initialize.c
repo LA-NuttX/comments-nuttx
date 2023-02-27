@@ -207,7 +207,7 @@ void clock_initialize(void)
     !defined(CONFIG_SYSTEMTICK_EXTCLK)
   /* Initialize the system timer interrupt */
 
-  up_timer_initialize();
+  up_timer_initialize();//调用nuttx/arch/risc-v/src/chip/qemu_rv_timerisr.c的
 #endif
 
 #if defined(CONFIG_RTC)

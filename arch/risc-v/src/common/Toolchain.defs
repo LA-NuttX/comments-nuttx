@@ -30,6 +30,8 @@
 ifeq ($(filter y, $(CONFIG_RISCV_TOOLCHAIN_GNU_RVG)),y)
   CONFIG_RISCV_TOOLCHAIN ?= GNU_RVG
 endif
+# 如果配置了 CONFIG_RISCV_TOOLCHAIN_GNU_RVG=y ，那么设置CONFIG_RISCV_TOOLCHAIN ?= GNU_RVG
+# 定义在nuttx/arch/risc-v/Kconfig，
 
 #
 # Supported toolchains
@@ -52,26 +54,33 @@ endif
 ifneq ($(CONFIG_DEBUG_NOOPT),y)
   ARCHOPTIMIZATION += -fno-strict-aliasing
 endif
+# 允许不同指针指向同一个内存地址
 
 ifeq ($(CONFIG_FRAME_POINTER),y)
   ARCHOPTIMIZATION += -fno-omit-frame-pointer -fno-optimize-sibling-calls
 else
   ARCHOPTIMIZATION += -fomit-frame-pointer
 endif
+# 去掉函数调用时的frame pointer, frame pointer在函数回溯时比较有用
 
 ifeq ($(CONFIG_STACK_CANARIES),y)
   ARCHOPTIMIZATION += -fstack-protector-all
 endif
+# 其为所有的函数都进行栈溢出检测
 
 ifeq ($(CONFIG_ARCH_COVERAGE_ALL),y)
   ARCHOPTIMIZATION += -fprofile-generate -ftest-coverage
 endif
+# fprofile-generate在实际运行时，应用程序将记录某些事件，如果在编译时知道此使用模式，则这些事件可以提高性能
+# ftest-coverage它包含了程序块和行号等信息
 
 ARCHCFLAGS += -fno-common
+#禁止将未初始化的全局变量放入到common段。这样就不会出现存在多个同名全局变量而编译时不报错的情况。
 ARCHCXXFLAGS += -fno-common -nostdinc++
 
 ARCHCFLAGS += -Wall -Wstrict-prototypes -Wshadow -Wundef
 ARCHCXXFLAGS += -Wall -Wshadow -Wundef
+# Warning Options
 
 ifneq ($(CONFIG_CXX_EXCEPTION),y)
   ARCHCXXFLAGS += -fno-exceptions -fcheck-new
@@ -86,7 +95,7 @@ LDFLAGS += -melf32lriscv
 else
 LDFLAGS += -melf64lriscv
 endif
-
+#链接选项，查看binutils manual,-m表示仿真
 # Optimization of unused sections
 
 ifeq ($(CONFIG_DEBUG_OPT_UNUSED_SECTIONS),y)
@@ -105,7 +114,7 @@ endif
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
   ARCHOPTIMIZATION += -g
 endif
-
+#生成debug调试信息
 # Generic GNU RVG toolchain
 
 ifeq ($(CONFIG_RISCV_TOOLCHAIN),GNU_RVG)

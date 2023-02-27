@@ -146,7 +146,7 @@ void uart_recvchars(FAR uart_dev_t *dev)
    * further characters to available.
    */
 
-  while (uart_rxavailable(dev))
+  while (uart_rxavailable(dev))//跳转到u16550_rxavailable
     {
       bool is_full = (nexthead == rxbuf->tail);
       char ch;
@@ -201,7 +201,7 @@ void uart_recvchars(FAR uart_dev_t *dev)
 
       /* Get this next character from the hardware */
 
-      ch = uart_receive(dev, &status);
+      ch = uart_receive(dev, &status);//u16550_receive
 
 #if defined(CONFIG_TTY_SIGINT) || defined(CONFIG_TTY_SIGTSTP) || \
     defined(CONFIG_TTY_FORCE_PANIC) || defined(CONFIG_TTY_LAUNCH)

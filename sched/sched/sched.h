@@ -384,10 +384,10 @@ int  nxsched_pause_cpu(FAR struct tcb_s *tcb);
 #endif
 
 #ifndef CONFIG_SCHED_CPULOAD_EXTCLK
-
+//riscv in
 /* CPU load measurement support */
 
-#  ifdef CONFIG_SCHED_CPULOAD
+#  ifdef CONFIG_SCHED_CPULOAD//riscv no
 void nxsched_process_cpuload_ticks(uint32_t ticks);
 #  else
 #    define nxsched_process_cpuload_ticks(ticks)

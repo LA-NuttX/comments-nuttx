@@ -19,7 +19,6 @@
 ############################################################################
 
 # Check if the system has been configured
-
 ifeq ($(wildcard .config),)
 .DEFAULT default:
 	@echo "NuttX has not been configured!"

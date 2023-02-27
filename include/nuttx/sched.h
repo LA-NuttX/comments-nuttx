@@ -239,6 +239,7 @@ typedef CODE void (*start_t)(void);
 
 /* This is the entry point into the main thread of the task or into a created
  * pthread within the task.
+ * task的main thread入口
  */
 
 union entry_u
@@ -683,7 +684,7 @@ struct task_tcb_s
  */
 
 #ifndef CONFIG_DISABLE_PTHREAD
-struct pthread_tcb_s
+struct pthread_tcb_s//riscv y
 {
   /* Common TCB fields ******************************************************/
 

@@ -247,7 +247,7 @@ int sched_lock(void)
       rtcb->lockcount++;
 
 #if defined(CONFIG_SCHED_INSTRUMENTATION_PREEMPTION) || \
-    defined(CONFIG_SCHED_CRITMONITOR)
+    defined(CONFIG_SCHED_CRITMONITOR)//riscv no
       /* Check if we just acquired the lock */
 
       if (rtcb->lockcount == 1)

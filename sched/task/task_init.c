@@ -149,7 +149,7 @@ int nxtask_init(FAR struct task_tcb_s *tcb, const char *name, int priority,
   /* Initialize the task control block */
 
   ret = nxtask_setup_scheduler(tcb, priority, nxtask_start,
-                               entry, ttype);
+                               entry, ttype);//架构相关
   if (ret < OK)
     {
       goto errout_with_group;

@@ -95,7 +95,7 @@ int nxthread_create(FAR const char *name, uint8_t ttype, int priority,
   /* Initialize the task */
 
   ret = nxtask_init(tcb, name, priority, stack_addr, stack_size,
-                    entry, argv, envp);
+                    entry, argv, envp);//架构相关
   if (ret < OK)
     {
       kmm_free(tcb);

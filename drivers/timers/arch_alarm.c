@@ -123,9 +123,10 @@ static void udelay_coarse(useconds_t microseconds)
 static void oneshot_callback(FAR struct oneshot_lowerhalf_s *lower,
                              FAR void *arg)
 {
+  //arg=NULL
   clock_t now = 0;
 
-#ifdef CONFIG_SCHED_TICKLESS
+#ifdef CONFIG_SCHED_TICKLESS//riscv no
   ONESHOT_TICK_CURRENT(g_oneshot_lower, &now);
   nxsched_alarm_tick_expiration(now);
 #else
@@ -136,9 +137,10 @@ static void oneshot_callback(FAR struct oneshot_lowerhalf_s *lower,
       static clock_t tick = 1;
       clock_t next;
 
-      nxsched_process_timer();
+      nxsched_process_timer();//处理系统时间，调度，watchdog相关内容
       next = ++tick;
       ONESHOT_TICK_CURRENT(g_oneshot_lower, &now);
+      //nuttx/include/nuttx/timers/oneshot.h的oneshot_tick_current(g_oneshot_lower,now)
       delta = next - now;
     }
   while ((sclock_t)delta <= 0);
@@ -164,6 +166,14 @@ void up_alarm_set_lowerhalf(FAR struct oneshot_lowerhalf_s *lower)
   g_oneshot_maxticks = ticks < UINT32_MAX ? ticks : UINT32_MAX;
 #else
   ONESHOT_TICK_START(g_oneshot_lower, oneshot_callback, NULL, 1);
+  /**
+   * ops->tick_start为空，执行
+   * oneshot_tick_start(g_oneshot_lower,oneshot_callback,NULL,1)
+   * oneshot_callback见本文件的函数
+   *
+   * 
+   * 
+   */
 #endif
 }
 

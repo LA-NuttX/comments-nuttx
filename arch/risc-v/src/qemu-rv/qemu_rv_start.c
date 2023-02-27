@@ -114,7 +114,7 @@ void qemu_rv_start(int mhartid)
   qemu_rv_clear_bss();
 #endif
 
-  showprogress('A');
+  showprogress('A');//保存uart中断状态，输出字符，恢复uart中断状态
 
 #ifdef USE_EARLYSERIALINIT
   up_earlyserialinit();

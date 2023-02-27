@@ -553,7 +553,7 @@ static int uart_open(FAR struct file *filep)
         {
           /* Perform one time hardware initialization */
 
-          ret = uart_setup(dev);
+          ret = uart_setup(dev);//好像在这里被第一次调用
           if (ret < 0)
             {
               leave_critical_section(flags);
@@ -567,7 +567,7 @@ static int uart_open(FAR struct file *filep)
        * this is not the console.
        */
 
-      ret = uart_attach(dev);
+      ret = uart_attach(dev);//进入u16550_attach
       if (ret < 0)
         {
           uart_shutdown(dev);
@@ -583,7 +583,7 @@ static int uart_open(FAR struct file *filep)
 
       /* Enable the RX interrupt */
 
-      uart_enablerxint(dev);
+      uart_enablerxint(dev);//u16550_rxint，使能接收数据中断
       leave_critical_section(flags);
     }
 

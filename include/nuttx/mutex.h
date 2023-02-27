@@ -161,7 +161,7 @@ static inline int nxmutex_lock(FAR mutex_t *mutex)
     {
       /* Take the semaphore (perhaps waiting) */
 
-      ret = _SEM_WAIT(mutex);
+      ret = _SEM_WAIT(mutex);//set_t就是mutex_t类型
       if (ret >= 0)
         {
           break;

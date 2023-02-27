@@ -37,6 +37,7 @@
 /* This structure provides the private representation of the "lower-half"
  * driver state structure.  This structure must be cast-compatible with the
  * oneshot_lowerhalf_s structure.
+ * 这个数据结构必须和oneshot_lowerhalf_s结构兼容
  */
 
 struct riscv_mtimer_lowerhalf_s
@@ -49,10 +50,6 @@ struct riscv_mtimer_lowerhalf_s
   oneshot_callback_t         callback;
   void                       *arg;
 };
-
-/****************************************************************************
- * Private Function Prototypes
- ****************************************************************************/
 
 static int riscv_mtimer_max_delay(struct oneshot_lowerhalf_s *lower,
                                   struct timespec *ts);
@@ -90,7 +87,7 @@ static uint64_t riscv_mtimer_get_mtime(struct riscv_mtimer_lowerhalf_s *priv)
    *    it could be read from the CSR "time".
    */
 
-  return -1 == priv->mtime ? READ_CSR(time) : getreg64(priv->mtime);
+  return -1 == priv->mtime ? READ_CSR(time) : getreg64(priv->mtime);//mtime是该寄存器地址，不是-1。
 #else
   uint32_t hi;
   uint32_t lo;
@@ -192,19 +189,22 @@ static int riscv_mtimer_start(struct oneshot_lowerhalf_s *lower,
                               oneshot_callback_t callback, void *arg,
                               const struct timespec *ts)
 {
+  //callback见nuttx/drivers/timers/arch_alarm.c里的函数，arg=NULL,ts表示1个tick占多少秒多少毫秒
+  
   struct riscv_mtimer_lowerhalf_s *priv =
     (struct riscv_mtimer_lowerhalf_s *)lower;
   uint64_t mtime = riscv_mtimer_get_mtime(priv);
 
   priv->alarm = mtime + ts->tv_sec * priv->freq +
                 ts->tv_nsec * priv->freq / NSEC_PER_SEC;
-  if (priv->alarm < mtime)
+  if (priv->alarm < mtime)//可能上溢出？
     {
       priv->alarm = UINT64_MAX;
     }
 
   priv->callback = callback;
   priv->arg      = arg;
+  //priv->arg设置为null
 
   riscv_mtimer_set_mtimecmp(priv, priv->alarm);
   return 0;
@@ -299,13 +299,16 @@ static int riscv_mtimer_current(struct oneshot_lowerhalf_s *lower,
 }
 
 static int riscv_mtimer_interrupt(int irq, void *context, void *arg)
-{
+{//irq_dispatch中调用CALL_VECTOR：
+//riscv_mtimer_interrupt(irq=RISCV_IRQ_TIMER, context=regs,arg=priv)
   struct riscv_mtimer_lowerhalf_s *priv = arg;
 
   riscv_mtimer_set_mtimecmp(priv, UINT64_MAX);
   if (priv->callback != NULL)
     {
       priv->callback(&priv->lower, priv->arg);
+      //callback函数见nuttx/drivers/timers/arch_alarm.c的oneshot_callback
+      //priv->callback(&priv->lower, priv->arg==NULL);
     }
 
   return 0;
@@ -319,12 +322,26 @@ struct oneshot_lowerhalf_s *
 riscv_mtimer_initialize(uintptr_t mtime, uintptr_t mtimecmp,
                         int irq, uint64_t freq)
 {
+  /**
+   *   riscv_mtimer_initialize(
+   * mtime=QEMU_RV_CLINT_MTIME, 
+   * mtimecmp=QEMU_RV_CLINT_MTIMECMP,
+   *  irq=RISCV_IRQ_MTIMER,
+   *  freq=MTIMER_FREQ);
+   * 
+   */
   struct riscv_mtimer_lowerhalf_s *priv;
 
   priv = kmm_zalloc(sizeof(*priv));
   if (priv != NULL)
     {
       priv->lower.ops = &g_riscv_mtimer_ops;
+      /**
+       *    .max_delay = riscv_mtimer_max_delay,
+       *    .start     = riscv_mtimer_start,
+       *    .cancel    = riscv_mtimer_cancel,
+       *    .current   = riscv_mtimer_current,
+       */
       priv->mtime     = mtime;
       priv->mtimecmp  = mtimecmp;
       priv->freq      = freq;

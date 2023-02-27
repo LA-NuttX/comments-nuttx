@@ -25,6 +25,8 @@
 # EXPORTLIBS is the list of libraries that should be exported by
 #   'make export' is
 
+# For rv-virt:nsh64, NUTTXLIBS=staging/libsched.a staging/libdrivers.a staging/libboards.a staging/libc.a 
+# staging/libmm.a staging/libarch.a staging/libapps.a staging/libfs.a staging/libbinfmt.a
 NUTTXLIBS = staging$(DELIM)libsched$(LIBEXT)
 USERLIBS =
 
@@ -35,6 +37,7 @@ NUTTXLIBS += staging$(DELIM)libdrivers$(LIBEXT)
 # External code support
 
 ifeq ($(EXTERNALDIR),external)
+# riscv no
   NUTTXLIBS += staging$(DELIM)libexternal$(LIBEXT)
 endif
 
@@ -48,6 +51,7 @@ NUTTXLIBS += staging$(DELIM)libc$(LIBEXT) staging$(DELIM)libmm$(LIBEXT)
 NUTTXLIBS += staging$(DELIM)libarch$(LIBEXT)
 
 ifeq ($(CONFIG_LIB_SYSCALL),y)
+#riscv no
 NUTTXLIBS += staging$(DELIM)libstubs$(LIBEXT)
 USERLIBS  += staging$(DELIM)libproxies$(LIBEXT)
 endif
@@ -74,7 +78,7 @@ NUTTXLIBS += staging$(DELIM)libxx$(LIBEXT)
 endif
 
 # Add library for application support.
-
+# 应用程序
 ifneq ($(APPDIR),)
 NUTTXLIBS += staging$(DELIM)libapps$(LIBEXT)
 endif

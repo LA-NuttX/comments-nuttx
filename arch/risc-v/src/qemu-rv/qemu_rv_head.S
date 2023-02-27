@@ -26,9 +26,12 @@
 
 #include <arch/arch.h>
 #include <arch/irq.h>
+# 引用了nuttx/arch/risc-v/include文件夹下
 
 #include "chip.h"
+# 引用了nuttx/arch/risc-v/src/qemu-rv/chip.h
 #include "riscv_internal.h"
+# 引用了nuttx/arch/risc-v/src/common/riscv_internal.h
 
 /****************************************************************************
  * Public Symbols
@@ -46,9 +49,9 @@ __start:
   csrr a0, mhartid
 
   /* Set stack pointer to the idle thread stack */
-
+//sp进入C环境后，编译器会根据abi动态调整sp的值，见abi
   bnez a0, 1f
-  la   sp, QEMU_RV_IDLESTACK_TOP
+  la   sp, QEMU_RV_IDLESTACK_TOP//0号核设置成QEMU_RV_IDLESTACK_TOP
   j    2f
 1:
 
@@ -72,18 +75,19 @@ __start:
   la   t0, g_cpu_basestack
 
   /* Offset = pointer width * hart id */
-
+  /* t1是cpu数量，a0是当前hardit */
 #ifdef CONFIG_ARCH_RV32
   slli t1, a0, 2
 #else
   slli t1, a0, 3
+  /*t1=a0<<3 */
 #endif
   add  t0, t0, t1
 
   /* Load idle stack base to sp */
 
   REGLOAD sp, 0(t0)
-
+//取得当前核的stack base
   /*
    * sp (stack top) = sp + idle stack size - XCPTCONTEXT_SIZE
    * 
@@ -93,7 +97,7 @@ __start:
 
   li   t0, STACK_ALIGN_UP(CONFIG_IDLETHREAD_STACKSIZE - XCPTCONTEXT_SIZE)
   add  sp, sp, t0
-
+//设置当前核的stack top
 2:
 
   /* Disable all interrupts (i.e. timer, external) in mie */

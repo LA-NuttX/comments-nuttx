@@ -186,7 +186,7 @@ FAR struct mm_heap_s *mm_initialize(FAR const char *name,
   /* First ensure the memory to be used is aligned */
 
   heap_adj  = MM_ALIGN_UP((uintptr_t)heapstart);
-  heapsize -= heap_adj - (uintptr_t)heapstart;
+  heapsize -= heap_adj - (uintptr_t)heapstart;//0x1fd2ac0
 
   /* Reserve a block space for mm_heap_s context */
 
@@ -217,7 +217,7 @@ FAR struct mm_heap_s *mm_initialize(FAR const char *name,
   nxmutex_init(&heap->mm_lock);
 
 #if defined(CONFIG_FS_PROCFS) && !defined(CONFIG_FS_PROCFS_EXCLUDE_MEMINFO)
-#  if defined(CONFIG_BUILD_FLAT) || defined(__KERNEL__)
+#  if defined(CONFIG_BUILD_FLAT) || defined(__KERNEL__)//risv here
   heap->mm_procfs.name = name;
   heap->mm_procfs.heap = heap;
 #    ifdef CONFIG_MM_BACKTRACE_DEFAULT

@@ -155,7 +155,7 @@ struct mm_allocnode_s
 #  endif
 #endif
   mmsize_t size;                            /* Size of this chunk */
-  mmsize_t preceding;                       /* Size of the preceding chunk */
+  mmsize_t preceding;                       /* Size of the preceding chunk 前一个块*/
 };
 
 /* This describes a free chunk */
